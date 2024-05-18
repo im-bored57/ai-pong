@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #333;
+        }
+
+        .game {
+            position: relative;
+            width: calc(100vw - 100px); /* Adjusted game area width */
+            height: calc(100vh - 100px); /* Adjusted game area height */
+            background-color: black;
+            border: 5px solid #555;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .ball {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #fff;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .paddle {
+            position: absolute;
+            width: 10px;
+            height: 100px;
+            background-color: #fff;
+        }
+
+        .paddle-left {
+            left: 20px;
+            top: calc(50% - 50px); /* Adjusted initial position */
+        }
+
+        .paddle-right {
+            right: 20px;
+            top: calc(50% - 50px); /* Adjusted initial position */
+        }
+    </style>
+</head>
+<body>
+    <div class="game" id="game">
+        <div class="ball"></div>
+        <div class="paddle paddle-left"></div>
+        <div class="paddle paddle-right"></div>
+    </div>
+
+    <script>
+        const ball = document.querySelector('.ball');
+        const leftPaddle = document.querySelector('.paddle-left');
+        const rightPaddle = document.querySelector('.paddle-right');
+        const gameArea = document.querySelector('.game');
+        const paddleSpeed = 8; // Faster paddle speed
+        const aiSpeed = 6;
+
+        let ballX = 400;
+        let ballY = 200;
+        let ballSpeedX = 6; // Faster ball speed
+        let ballSpeedY = 6; // Faster ball speed
+
+        let leftPaddleY = gameArea.clientHeight / 2 - 50; // Adjusted initial position
+        let rightPaddleY = gameArea.clientHeight / 2 - 50; // Adjusted initial position
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowUp' && rightPaddleY > 0) {
+                rightPaddleY -= paddleSpeed;
+                rightPaddleY = Math.max(rightPaddleY, 0); // Ensure paddle stays within the top border
+                rightPaddle.style.top = rightPaddleY + 'px';
+            } else if (event.key === 'ArrowDown' && rightPaddleY < gameArea.clientHeight - rightPaddle.clientHeight) {
+                rightPaddleY += paddleSpeed;
+                rightPaddleY = Math.min(rightPaddleY, gameArea.clientHeight - rightPaddle.clientHeight); // Ensure paddle stays within the bottom border
+                rightPaddle.style.top = rightPaddleY + 'px';
+            }
+        });
+
+        function updateRightPaddle() {
+            // Advanced AI for the right paddle
+            const targetY = ballY + (ballSpeedY / ballSpeedX) * (gameArea.clientWidth - ballX);
+            if (targetY > rightPaddleY + rightPaddle.clientHeight / 2) {
+                rightPaddleY += aiSpeed;
+            } else {
+                rightPaddleY -= aiSpeed;
+            }
+            rightPaddleY = Math.max(rightPaddleY, 0); // Ensure paddle stays within the top border
+            rightPaddleY = Math.min(rightPaddleY, gameArea.clientHeight - rightPaddle.clientHeight); // Ensure paddle stays within the bottom border
+            rightPaddle.style.top = rightPaddleY + 'px';
+        }
+
+        function update() {
+            updateRightPaddle();
+
+            // Simple AI for the left paddle
+            if (ballY > leftPaddleY + leftPaddle.clientHeight / 2) {
+                leftPaddleY += aiSpeed;
+            } else {
+                leftPaddleY -= aiSpeed;
+            }
+            leftPaddleY = Math.max(leftPaddleY, 0); // Ensure paddle stays within the top border
+            leftPaddleY = Math.min(leftPaddleY, gameArea.clientHeight - leftPaddle.clientHeight); // Ensure paddle stays within the bottom border
+            leftPaddle.style.top = leftPaddleY + 'px';
+
+            // Ball movement
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            // Ball collision with top and bottom walls
+            if (ballY <= 10 || ballY >= gameArea.clientHeight - 10) {
+                ballSpeedY = -ballSpeedY;
+            }
+
+            // Ball collision with left and right walls
+            if (ballX <= 10 || ballX >= gameArea.clientWidth - 10) {
+                ballSpeedX = -ballSpeedX;
+            }
+
+            // Ball collision with paddles
+            if (ballX <= leftPaddle.clientWidth + 20 && ballY + ball.clientHeight >= leftPaddleY && ballY <= leftPaddleY + leftPaddle.clientHeight) {
+                ballSpeedX = Math.abs(ballSpeedX);
+            }
+
+            if (ballX >= gameArea.clientWidth - 30 - rightPaddle.clientWidth && ballY + ball.clientHeight >= rightPaddleY && ballY <= rightPaddleY + rightPaddle.clientHeight) {
+                ballSpeedX = -Math.abs(ballSpeedX);
+            }
+
+            // Update ball position
+            ball.style.left = ballX + 'px';
+            ball.style.top = ballY + 'px';
+        }
+
+        function gameLoop() {
+            update();
+            setTimeout(gameLoop, 1000 / 80); // Adjusted loop to run at 80fps
+        }
+
+        // Make the game fullscreen when it loads
+        document.addEventListener('DOMContentLoaded', function () {
+            const game = document.getElementById('game');
+            game.requestFullscreen();
+        });
+
+        gameLoop();
+    </script>
+</body>
+</html>
